@@ -1,14 +1,19 @@
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Set up CORS for handling requests from the frontend
+app.use(require('cors')());
 
-const fetchCurrencies = async () => {
+// API endpoint to fetch top 100 cryptocurrencies and supported currencies
+app.get('/api/currencies', async (req, res) => {
     try {
-        const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
+        // Use Coingecko API for demonstration purposes
+        const response = await axios.get('https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
+            headers: {
+                'X-CMC_PRO_API_KEY': '3e6d3374-262e-4cca-9e14-49510e254b18',
+              },
             params: {
                 vs_currency: 'usd',
                 order: 'market_cap_desc',
@@ -17,21 +22,7 @@ const fetchCurrencies = async () => {
                 sparkline: false,
             },
         });
-        return response.data.map((crypto) => crypto.symbol.toUpperCase());
-    } catch (error) {
-        console.error('Error fetching currencies:', error.message);
-        if (error.response) {
-            console.error('Response status:', error.response.status);
-            console.error('Response data:', error.response.data);
-            console.error('Response headers:', error.response.headers);
-        }
-        throw error;
-    }
-};
-
-app.get('/api/currencies', async (req, res) => {
-    try {
-        const currencies = await fetchCurrencies();
+        const currencies = response.data.map((crypto) => crypto.symbol.toUpperCase());
         currencies.push('USD', 'EUR'); // Add more currencies if needed
         res.json(currencies);
     } catch (error) {
@@ -40,7 +31,33 @@ app.get('/api/currencies', async (req, res) => {
     }
 });
 
+// API endpoint for currency conversion
+app.get('/api/convert', async (req, res) => {
+    const { sourceCrypto, amount, targetCurrency } = req.query;
+    try {
+        // Use Coingecko API for demonstration purposes
+        const response = await axios.get('https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
+            headers: {
+                'X-CMC_PRO_API_KEY': '3e6d3374-262e-4cca-9e14-49510e254b18',
+              },
+            params: {
+                ids: sourceCrypto,
+                vs_currencies: targetCurrency,
+            },
+        });
+
+        const exchangeRate = response.data[sourceCrypto][targetCurrency];
+        const convertedAmount = amount * exchangeRate;
+        res.json({ convertedAmount });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
+
