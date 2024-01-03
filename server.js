@@ -10,10 +10,7 @@ app.use(require('cors')());
 app.get('/api/currencies', async (req, res) => {
     try {
         // Use Coingecko API for demonstration purposes
-        const response = await axios.get('https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
-            headers: {
-                'X-CMC_PRO_API_KEY': '3e6d3374-262e-4cca-9e14-49510e254b18',
-              },
+        const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
             params: {
                 vs_currency: 'usd',
                 order: 'market_cap_desc',
@@ -22,8 +19,8 @@ app.get('/api/currencies', async (req, res) => {
                 sparkline: false,
             },
         });
-        const currencies = response.data.map((crypto) => crypto.symbol.toUpperCase());
-        currencies.push('USD', 'EUR'); // Add more currencies if needed
+        const currencies = response.data.map((crypto) => crypto.id.toUpperCase());
+        //currencies.push('btc', 'eth'); // Add more currencies if needed
         res.json(currencies);
     } catch (error) {
         console.error(error);
@@ -36,18 +33,23 @@ app.get('/api/convert', async (req, res) => {
     const { sourceCrypto, amount, targetCurrency } = req.query;
     try {
         // Use Coingecko API for demonstration purposes
-        const response = await axios.get('https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
-            headers: {
-                'X-CMC_PRO_API_KEY': '3e6d3374-262e-4cca-9e14-49510e254b18',
-              },
+        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+            // headers: {
+            //     'X-CMC_PRO_API_KEY': '3e6d3374-262e-4cca-9e14-49510e254b18',
+            //   },
             params: {
                 ids: sourceCrypto,
                 vs_currencies: targetCurrency,
             },
-        });
+        }
+        );
+        console.log("response",response)
+
+        //Prams madhe values yet nahit
 
         const exchangeRate = response.data[sourceCrypto][targetCurrency];
         const convertedAmount = amount * exchangeRate;
+        console.log(exchangeRate)
         res.json({ convertedAmount });
     } catch (error) {
         console.error(error);
